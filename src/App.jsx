@@ -1,38 +1,22 @@
 import React from "react"
 import bgMusic from "../assets/bg.mp3"
 import './index.css'
+import { db } from "./firebase"
+import { ref, push, onValue } from "firebase/database"
+
 const lines=[
  [0,1,2],[3,4,5],[6,7,8],
  [0,3,6],[1,4,7],[2,5,8],
  [0,4,8],[2,4,6]
 ]
 
-const aiMotivation = [
- "Langkahmu barusan benar-benar tidak masuk akal!",
- "Kamu seperti sengaja memilih langkah terburuk!",
- "Strategimu kosong total!",
- "Aku bahkan tidak perlu berpikir untuk mengalahkanmu!",
- "Permainanmu berantakan dari awal!",
- "Setiap giliranmu justru menguntungkanku!",
- "Kamu membuat kesalahan dengan sangat konsisten!",
- "Main seperti ini mau menang dari siapa?",
- "Logika permainanmu benar-benar kacau!",
- "Langkahmu seperti dipilih tanpa otak strategi!",
- "Aku sampai heran kamu bisa salah terus!",
- "Ini bukan duel, ini latihan gratis buatku!",
- "Kamu membuka semua peluang untukku!",
- "Cara mainmu terlalu mudah dibaca!",
- "Kamu mengalahkan dirimu sendiri!",
- "Setiap keputusanmu mempercepat kekalahan!",
- "Aku tidak perlu jebakan, kamu sudah menjebak diri sendiri!",
- "Strategimu runtuh sebelum permainan selesai!",
- "Kamu benar-benar membantu aku menang!",
- "Kalau terus begini, permainan ini jadi membosankan!",
- "ikan hiyu beli somay",
- "ikan Hiyu makan tomat welllll",
- "Si Zibong pergi ke pasar wellll",
- "Kalau mau menang coba sebut ini, Hamzah kasep"
-];
+const aiMotivation=[
+ "Semangat, belajar lagi!",
+ "Jangan menyerah!",
+ "Kamu pasti bisa menang!",
+ "Coba lagi, kamu pasti bisa!",
+ "Next time menang deh!"
+]
 
 function cek(board){
  for(let l of lines){
@@ -46,6 +30,7 @@ function cek(board){
 
 function minimax(board,depth,isAI){
  let r=cek(board)
+
  if(r?.p==="O") return 10-depth
  if(r?.p==="X") return depth-10
  if(!board.includes(null)) return 0
@@ -104,8 +89,6 @@ export default function App(){
  const loadScore=()=>JSON.parse(localStorage.getItem("ttt_score")||"{\"X\":0,\"O\":0,\"AI\":0}")
  const saveScore=(s)=>localStorage.setItem("ttt_score",JSON.stringify(s))
 
- const loadLeader=()=>JSON.parse(localStorage.getItem("ttt_leader")||"[]")
-
  const[board,setBoard]=React.useState(Array(9).fill(null))
  const[player,setPlayer]=React.useState("X")
  const[end,setEnd]=React.useState(false)
@@ -117,7 +100,7 @@ export default function App(){
 
  const[playerName,setPlayerName]=React.useState("")
  const[inputName,setInputName]=React.useState("")
- const[leader,setLeader]=React.useState(loadLeader())
+ const[leader,setLeader]=React.useState([])
 
  const audioRef=React.useRef(null)
 
@@ -137,6 +120,7 @@ export default function App(){
 
  function tambahScore(p){
   let s={...score}
+
   if(mode==="friend"){
    if(p==="X") s.X++
    if(p==="O") s.O++
@@ -144,26 +128,56 @@ export default function App(){
    if(p==="X") s.X++
    if(p==="O") s.AI++
   }
+
   setScore(s)
   saveScore(s)
- }
+}
 
  function saveLeader(){
   if(!playerName) return
 
-  let data=[...leader]
-  let f=data.find(v=>v.name===playerName)
-
-  if(f) f.score++
-  else data.push({name:playerName,score:1})
-
-  data.sort((a,b)=>b.score-a.score)
-
-  setLeader(data)
-  localStorage.setItem("ttt_leader",JSON.stringify(data))
+  push(ref(db,"leaderboard"),{
+   name:playerName,
+   score:1,
+   time:Date.now()
+  })
  }
 
+ React.useEffect(()=>{
+
+  const leaderboardRef = ref(db,"leaderboard")
+
+  onValue(leaderboardRef,(snapshot)=>{
+   const data = snapshot.val() || {}
+
+   let arr = Object.values(data)
+
+   let map={}
+
+   arr.forEach(v=>{
+    if(!map[v.name]) map[v.name]=0
+    map[v.name]+=v.score
+   })
+
+   let result = Object.keys(map).map(n=>({
+    name:n,
+    score:map[n]
+   }))
+
+   result.sort((a,b)=>b.score-a.score)
+
+   setLeader(result.slice(0,10))
+  })
+
+ },[])
+
  function click(i){
+
+  if(!playerName){
+   setPopup("Masukkan nama dulu")
+   return
+  }
+
   if(!mode || board[i] || end || lock) return
 
   let b=[...board]
@@ -177,11 +191,13 @@ export default function App(){
    setEnd(true)
    tambahScore(player)
 
-   if(mode==="ai" && player==="X") saveLeader()
+   if(mode==="ai" && player==="X"){
+    saveLeader()
+   }
 
    if(mode==="ai" && r.p==="O"){
     const msg=aiMotivation[Math.floor(Math.random()*aiMotivation.length)]
-    setPopup("Ai CyberZah | "+msg)
+    setPopup("Ai CyberZah Menang! "+msg)
    }else{
     setPopup("Pemain "+player+" Menang")
    }
@@ -216,17 +232,20 @@ export default function App(){
     setEnd(true)
     tambahScore("O")
     const msg=aiMotivation[Math.floor(Math.random()*aiMotivation.length)]
-    setPopup("Ai CyberZah |  "+msg)
-   }else if(!b.includes(null)){
+    setPopup("Ai CyberZah Menang! "+msg)
+   }
+   else if(!b.includes(null)){
     setBoard([...b])
     setEnd(true)
     setPopup("Seri")
-   }else{
+   }
+   else{
     setBoard([...b])
    }
 
    setLock(false)
-  },400)
+
+  },500)
  }
 
  function pilih(m){
@@ -252,25 +271,28 @@ export default function App(){
    value={inputName}
    onChange={e=>setInputName(e.target.value)}
   />
-  <button onClick={()=>setPlayerName(inputName)}>Simpan</button>
+  <button onClick={()=>setPlayerName(inputName)}>
+   Simpan
+  </button>
  </div>
 
  <div>
-  <button onClick={()=>pilih("ai")}>Main vs Ai CyberZah</button>
-  <button onClick={()=>pilih("friend")}>Main vs Teman</button>
- </div>
+  <button onClick={()=>pilih("ai")}>
+   Main vs Ai CyberZah
+  </button>
 
- <h3>
- {mode==="ai" && "Mode: Ai CyberZah"}
- {mode==="friend" && "Mode: Teman"}
- {!mode && "Pilih Mode"}
- </h3>
+  <button onClick={()=>pilih("friend")}>
+   Main vs Teman
+  </button>
+ </div>
 
  <div className="board">
  {board.map((v,i)=>(
-  <button key={i}
+  <button
+   key={i}
    onClick={()=>click(i)}
-   className={winLine.includes(i)?"cell win":"cell"}>
+   className={winLine.includes(i)?"cell win":"cell"}
+  >
    {v}
   </button>
  ))}
@@ -283,15 +305,13 @@ export default function App(){
 
  {mode==="ai" && (
  <div className="score">
-  <div>Kamu : {score.X}</div>
-  <div>Ai : {score.AI}</div>
+  Kamu : {score.X} | Ai : {score.AI}
  </div>
  )}
 
  {mode==="friend" && (
  <div className="score">
-  <div>X : {score.X}</div>
-  <div>O : {score.O}</div>
+  X : {score.X} | O : {score.O}
  </div>
  )}
 
@@ -305,9 +325,13 @@ export default function App(){
  )}
 
  <div className="leaderboard">
- <h3>Peringkat Pemain</h3>
+ <h3>Top Player Global</h3>
 
- {leader.length===0 && <div className="leader-empty">Belum ada skor</div>}
+ {leader.length===0 && (
+ <div className="leader-empty">
+ Belum ada skor
+ </div>
+ )}
 
  {leader.map((v,i)=>(
   <div key={i} className="leader-row">
@@ -315,6 +339,7 @@ export default function App(){
    <span>{v.score}</span>
   </div>
  ))}
+
  </div>
 
  </div>
