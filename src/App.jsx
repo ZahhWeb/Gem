@@ -10,13 +10,32 @@ const lines=[
  [0,4,8],[2,4,6]
 ]
 
-const aiMotivation=[
- "Semangat, belajar lagi!",
- "Jangan menyerah!",
- "Kamu pasti bisa menang!",
- "Coba lagi, kamu pasti bisa!",
- "Next time menang deh!"
-]
+const aiMotivation = [
+ "Langkahmu barusan benar-benar tidak masuk akal!",
+ "Kamu seperti sengaja memilih langkah terburuk!",
+ "Strategimu kosong total!",
+ "Aku bahkan tidak perlu berpikir untuk mengalahkanmu!",
+ "Permainanmu berantakan dari awal!",
+ "Setiap giliranmu justru menguntungkanku!",
+ "Kamu membuat kesalahan dengan sangat konsisten!",
+ "Main seperti ini mau menang dari siapa?",
+ "Logika permainanmu benar-benar kacau!",
+ "Langkahmu seperti dipilih tanpa otak strategi!",
+ "Aku sampai heran kamu bisa salah terus!",
+ "Ini bukan duel, ini latihan gratis buatku!",
+ "Kamu membuka semua peluang untukku!",
+ "Cara mainmu terlalu mudah dibaca!",
+ "Kamu mengalahkan dirimu sendiri!",
+ "Setiap keputusanmu mempercepat kekalahan!",
+ "Aku tidak perlu jebakan, kamu sudah menjebak diri sendiri!",
+ "Strategimu runtuh sebelum permainan selesai!",
+ "Kamu benar-benar membantu aku menang!",
+ "Kalau terus begini, permainan ini jadi membosankan!",
+ "ikan hiyu beli somay",
+ "ikan Hiyu makan tomat welllll",
+ "Si Zibong pergi ke pasar wellll",
+ "Kalau mau menang coba sebut ini, Hamzah kasep"
+];
 
 function cek(board){
  for(let l of lines){
