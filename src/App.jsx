@@ -1,5 +1,6 @@
 import React from "react"
 import bgMusic from "../assets/bg.mp3"
+import img from "../assets/1765104707992~2.jpg"
 import './index.css'
 import { db } from "./firebase"
 import { ref, push, onValue } from "firebase/database"
@@ -279,7 +280,9 @@ export default function App(){
 
  return(
  <div className="app">
-
+ <div className="imggg">
+ <img src={img} />
+ </div>
  <h1>Tic Tac Toe</h1>
 
  <audio ref={audioRef} src={bgMusic} loop />
